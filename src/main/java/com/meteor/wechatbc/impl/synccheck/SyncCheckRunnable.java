@@ -13,10 +13,7 @@ import com.meteor.wechatbc.entitiy.synccheck.SyncCheckResponse;
 import com.meteor.wechatbc.entitiy.synccheck.SyncCheckRetcode;
 import com.meteor.wechatbc.impl.WeChatClient;
 import com.meteor.wechatbc.impl.event.EventManager;
-import com.meteor.wechatbc.impl.event.sub.ClientDeathEvent;
-import com.meteor.wechatbc.impl.event.sub.MessageEvent;
-import com.meteor.wechatbc.impl.event.sub.OwnerMessageEvent;
-import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
+import com.meteor.wechatbc.impl.event.sub.*;
 import com.meteor.wechatbc.impl.model.Session;
 import com.meteor.wechatbc.impl.model.message.PayMessage;
 import com.meteor.wechatbc.impl.model.message.VideoMessage;
@@ -89,13 +86,23 @@ public class SyncCheckRunnable {
 
             messageCache.put(String.valueOf(message.getMsgId()),message);
 
+            // 是否为群消息
+            if (message.getFromUserName().startsWith("@@")) {
+                final Contact groupContact = weChatClient.getContactManager().getGroupContact(message.getFromUserName());
+                final Contact.ContactMember groupMemberUser = groupContact.findGroupMemberUser(message.getSenderUserName());
+                System.out.println(groupContact);
+                logger.info("{} > {} : {}", groupContact.getNickName(), groupMemberUser.getDisplayName(), message.getContent());
+                callMessageEvent(new MessageEvent(messageCache.getIfPresent(String.valueOf(message.getMsgId()))));
+                return;
+            }
             String nickName = Optional.ofNullable(weChatClient.getContactManager().getContactCache().get(message.getFromUserName()))
                             .map(Contact::getNickName)
                                     .orElse("未知");
 
             String toUser = Optional.ofNullable(weChatClient.getContactManager().getContactCache().get(message.getToUserName()))
                             .map(Contact::getNickName).orElse("未知");
-            logger.info("{}>{} : {}", nickName, toUser, message.getContent());
+            logger.info("{} > {} : {}", nickName, toUser, message.getContent());
+
             callMessageEvent(new MessageEvent(messageCache.getIfPresent(String.valueOf(message.getMsgId()))));
         }
     }
@@ -116,8 +123,12 @@ public class SyncCheckRunnable {
             // 本人发出消息
             eventManager.callEvent(new OwnerMessageEvent(message));
         }else {
-            // 接收消息
-            eventManager.callEvent(new ReceiveMessageEvent(message));
+            if (message.getFromUserName().startsWith("@@")){
+                eventManager.callEvent(new GroupMessageEvent(message));
+            }else {
+                // 接收消息
+                eventManager.callEvent(new ReceiveMessageEvent(message));
+            }         
         }
     }
 

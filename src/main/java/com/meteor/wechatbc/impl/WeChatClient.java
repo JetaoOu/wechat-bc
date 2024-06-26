@@ -7,15 +7,18 @@ import com.meteor.wechatbc.impl.console.Console;
 import com.meteor.wechatbc.impl.contact.ContactManager;
 import com.meteor.wechatbc.impl.event.EventManager;
 import com.meteor.wechatbc.impl.fileupload.FileChunkUploader;
+import com.meteor.wechatbc.impl.model.Session;
 import com.meteor.wechatbc.impl.plugin.PluginManager;
 import com.meteor.wechatbc.impl.scheduler.SchedulerImpl;
 import com.meteor.wechatbc.impl.synccheck.SyncCheckRunnable;
 import com.meteor.wechatbc.launch.login.PrintQRCodeCallBack;
 import com.meteor.wechatbc.launch.login.WeChatLogin;
 import com.meteor.wechatbc.scheduler.Scheduler;
+import com.meteor.wechatbc.util.URL;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import okhttp3.HttpUrl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,6 +58,16 @@ public class WeChatClient {
             return false;
         }
     }
+    public boolean initWeChatCore(Session session) {
+        try {
+            this.weChatCore = new WeChatCoreImpl(this,
+                    session);
+            this.weChatCore.getHttpAPI().init();
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
 
     /**
      * 一些必要的目录
@@ -74,6 +87,9 @@ public class WeChatClient {
      */
     public void start(){
         this.weChatCore.getHttpAPI().initWeChat();
+        if (this.weChatCore.getHttpAPI().initWeChat() != 0) {
+            throw new RuntimeException("初始化微信接口失败");
+        }
         this.syncCheckRunnable = new SyncCheckRunnable(this);
         this.contactManager = new ContactManager(this);
         this.eventManager = new EventManager(this);
@@ -119,6 +135,24 @@ public class WeChatClient {
      * 登录
      */
     public void login(PrintQRCodeCallBack printQRCodeCallBack){
+
+        try {
+            this.logger = LogManager.getLogger("尝试登录旧的微信... ");
+            final Session session = Session.loadHotLoginData(new File("hotLogin.dat"));
+            if (session != null) {
+                // 获取cookie的 domain 所属域名
+                URL.setBASE_URL(new HttpUrl.Builder()
+                        .scheme("https")
+                        .host(session.getBaseRequest().getBaseDomain())
+                        .build());
+                this.initWeChatCore(session);
+                this.start();
+                return;
+            }
+        } catch (Exception e) {
+            this.logger.error("历史微信无法加载。重新扫码登陆... ");
+        }
+        
         String loginUUID = weChatLogin.getLoginUUID();
 
         printQRCodeCallBack.print(loginUUID);

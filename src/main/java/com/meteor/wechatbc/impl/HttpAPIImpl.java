@@ -65,7 +65,7 @@ public class HttpAPIImpl implements HttpAPI {
     }
 
     @Override
-    public void initWeChat() {
+    public int initWeChat() {
         HttpUrl httpUrl = URL.BASE_URL.newBuilder()
                 .encodedPath(URL.WXINIT)
                 .addQueryParameter("_",String.valueOf(System.currentTimeMillis()))
@@ -78,6 +78,7 @@ public class HttpAPIImpl implements HttpAPI {
         ) {
             String responseToString = response.body().string();
             Session session = weChatClient.getWeChatCore().getSession();
+            JSONObject wxInitInfoJSONObject = JSON.parseObject(responseToString);
             WxInitInfo wxInitInfo = JSON.parseObject(responseToString, WxInitInfo.class);
             session.setWxInitInfo(wxInitInfo);
             session.setCheckSyncKey(wxInitInfo.getSyncKey());
@@ -86,6 +87,7 @@ public class HttpAPIImpl implements HttpAPI {
             weChatClient.getLogger().debug("已初始化微信信息:");
             weChatClient.getLogger().debug("用户信息:");
             weChatClient.getLogger().debug(user.toString());
+            return wxInitInfoJSONObject.getJSONObject("BaseResponse").getInteger("Ret");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -158,8 +160,8 @@ public class HttpAPIImpl implements HttpAPI {
                 .addQueryParameter("rr",String.valueOf(System.currentTimeMillis()))
                 .build();
         Request request = BASE_REQUEST.newBuilder().url(httpUrl)
-                        .post(RequestBody.create(mediaType,JSONObject.toJSONString(new JSONObject())))
-                                .build();
+                .post(RequestBody.create(mediaType, JSONObject.toJSONString(new JSONObject())))
+                .build();
         try(
                 Response response = okHttpClient.newCall(request).execute();
         ) {

@@ -1,5 +1,7 @@
 package com.meteor.wechatbc.impl.event.listener;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 import com.meteor.wechatbc.command.sender.ContactSender;
 import com.meteor.wechatbc.entitiy.contact.Contact;
 import com.meteor.wechatbc.entitiy.message.Message;
@@ -9,6 +11,8 @@ import com.meteor.wechatbc.impl.command.CommandManager;
 import com.meteor.wechatbc.impl.event.Listener;
 import com.meteor.wechatbc.impl.event.sub.MessageEvent;
 import com.meteor.wechatbc.impl.event.sub.ReceiveMessageEvent;
+import com.meteor.wechatbc.impl.model.message.ImageMessage;
+import com.meteor.wechatbc.util.XYZWUtil;
 import lombok.AllArgsConstructor;
 
 import java.util.Optional;

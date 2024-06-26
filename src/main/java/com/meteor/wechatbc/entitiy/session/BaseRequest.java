@@ -40,9 +40,11 @@ public class BaseRequest implements Serializable {
     private String passTicket;
     @JSONField(serialize = false)
     private String authTicket;
-
+    
     @JSONField(serialize = false)
-
+    private String baseDomain;
+    
+    @JSONField(serialize = false)
     transient private List<Cookie> initCookie; // 该类不能进行序列化
 
     private List<CookiePack> cookiePacks; // 代理了cookie类来实现序列化
@@ -51,11 +53,21 @@ public class BaseRequest implements Serializable {
         this.initCookie = initCookie;
         this.cookiePacks = initCookie.stream().map(cookie -> new CookiePack(cookie))
                 .collect(Collectors.toList());
+        this.initCookie = null;
     }
 
     public List<Cookie> getInitCookie() {
         if(initCookie == null){
-            this.initCookie = cookiePacks.stream().map(cookiePack -> cookiePack.getCookie()).collect(Collectors.toList());
+            this.initCookie = cookiePacks.stream().map(cookiePack ->
+                    new Cookie.Builder().
+                            name(cookiePack.getName()).
+                            value(cookiePack.getValue()).
+                            expiresAt(cookiePack.getExpiresAt()).
+                            domain(cookiePack.getDomain()).
+                            path(cookiePack.getPath()).
+                            secure().
+                            httpOnly().build()
+            ).collect(Collectors.toList());
         }
         return initCookie;
     }
