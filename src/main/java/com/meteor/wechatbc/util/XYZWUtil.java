@@ -6,6 +6,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
+import lombok.Data;
+import lombok.Getter;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -29,42 +31,32 @@ import java.util.stream.Collectors;
 public class XYZWUtil {
 
 	public static void main(String[] args) {
-//		String s = praiseSimpleReport("C:\\Users\\jietao.ou\\Pictures\\微信图片_20240621140906.jpg");
-//		System.out.println("s = " + s);
-		String text = "8226&1/100&宝箱&1/7&X396&3&8227&283.5亿HP&还差15积分领取铂金宝箱&积分值25/40&木质宝箱&抽到紫将概率5%&打开10个宝箱&X292&X41&99+&57644764/23158100a8/28&暂未激活&X396&X72&宝箱&XO";
-		String t_pattern = "[X](\\d+)";
-		Pattern brick_p = Pattern.compile(t_pattern);
-		Matcher brick_m = brick_p.matcher(text);
-		StringBuilder builder = new StringBuilder();
-		int sumPoint = 0;
-		int i = 0;
-		while (brick_m.find()) {
-			if (i < 5){
-				Title1 byCode = Title1.findByCode(i);
-				i++;
-				if (ObjUtil.isEmpty(byCode)){
-					continue;
-				}
-				Integer count = Integer.valueOf(brick_m.group(1));
-				int point = count * byCode.getPoint();
-				builder.append(String.format("%s：%s,折算：%s 分", byCode.name, count, point)).append("\n");
-				sumPoint += point;
-			}
-		}
-		System.out.println(builder);
+		String s = praiseSimpleReport("C:\\Users\\jietao.ou\\Pictures\\2bc0e4d1661979bf1aa670a52bc4b9d.jpg");
+		System.out.println(s);
 	}
 
 	public static String praiseSimpleReport(String url) {
 		String base64Image = readPic(url);
 		OCRApiResult apiResult = ocrHandler(base64Image);
 		if (100 == apiResult.getCode()) {
-			String text = Optional.ofNullable(apiResult.getData()).orElse(new ArrayList<>())
-					.stream().map(ApiData::getText).collect(Collectors.joining("&"));
-			return dataHandler(text);
+			return dataHandler(apiResult);
 		}
 		return null;
 	}
 
+	//宝箱图
+	public static String praisePointBox(String url) {
+		String base64Image = readPic(url);
+		OCRApiResult apiResult = ocrHandler(base64Image);
+		return XYZWSimpleReportDTO.buildBox(apiResult).printBoxResult();
+	}
+
+	/**
+	 * 咸鱼简报
+	 *
+	 * @param bufferedImage
+	 * @return
+	 */
 	public static String praiseSimpleReport(BufferedImage bufferedImage) {
 		// 将BufferedImage对象写入到ByteArrayOutputStream中
 		// 将BufferedImage对象写入到ByteArrayOutputStream中
@@ -80,122 +72,38 @@ public class XYZWUtil {
 		}
 
 		OCRApiResult apiResult = ocrHandler(base64Image);
-		if (100 == apiResult.getCode()) {
-			String text = Optional.ofNullable(apiResult.getData()).orElse(new ArrayList<>())
-					.stream().map(ApiData::getText).collect(Collectors.joining("&"));
-			return dataHandler(text);
+		if (100 == apiResult.getCode()) {			
+			return dataHandler(apiResult);
 		}
 		return null;
 	}
 
-	private static String dataHandler(String text) {
+	private static String dataHandler(OCRApiResult apiResult) {
+		String text = Optional.ofNullable(apiResult.getData()).orElse(new ArrayList<>())
+				.stream().map(ApiData::getText).collect(Collectors.joining("&"));
 		if (StrUtil.isEmpty(text)) {
 			return null;
 		}
-		if (text.contains("咸鱼简报")) {
-			String coin_pattern = "金币[×x](\\d+\\.?\\d*)";
-			String t_pattern = "[×x](\\d+)";
-
-
-			Pattern coin_p = Pattern.compile(coin_pattern);
-			Matcher coin_m = coin_p.matcher(text);
-			if (coin_m.find()) {
-				double coin_number = Double.parseDouble(coin_m.group(1));
-				System.out.println("金币数量：" + coin_number);
-			} else {
-				System.out.println("未找到金币数量");
-			}
-
-			StringBuilder builder = new StringBuilder();
-			int sumPoint = 0;
-			for (title s : title.values()) {
-				Pattern brick_p = Pattern.compile(s.name + t_pattern);
-				Matcher brick_m = brick_p.matcher(text);
-				if (brick_m.find()) {
-					int brick_number = Integer.parseInt(brick_m.group(1));
-					switch (s) {
-						case T1:
-							builder.append(String.format("%s：%s,目标：25万，缺：%s", s.name, brick_number, NumberUtil.max(250000 - brick_number, 0))).append("\n");
-							break;
-						case T2:
-							builder.append(String.format("%s：%s,目标：3200，缺：%s", s.name, brick_number, NumberUtil.max(3200 - brick_number, 0))).append("\n");
-							break;
-						case T3:
-							builder.append(String.format("%s：%s,目标：750，缺：%s", s.name, brick_number, NumberUtil.max(750 - brick_number, 0))).append("\n");
-							break;
-						case T4:
-							builder.append(String.format("%s：%s,折算：%s 分", s.name, brick_number, brick_number * s.point)).append("\n");
-							break;
-						case T5:
-							builder.append(String.format("%s：%s,折算：%s 分", s.name, brick_number, s.point * brick_number)).append("\n");
-
-							break;
-						case T6:
-							builder.append(String.format("%s：%s,折算：%s 分", s.name, brick_number, s.point * brick_number)).append("\n");
-							break;
-						case T7:
-							builder.append(String.format("%s：%s,折算：%s 分", s.name, brick_number, s.point * brick_number)).append("\n");
-							break;
-						case T8:
-							builder.append(String.format("未领取积分：%s 分", brick_number)).append("\n");
-							break;
-					}
-					sumPoint += brick_number * s.point;
-//				System.out.println(String.format("%s数量：%s",s.name,brick_number));
-				} else {
-					System.out.println(String.format("未找到%s数量", s.name));
-				}
-			}
-			builder.append(String.format("宝箱周：%s轮", BigDecimal.valueOf(NumberUtil.div(sumPoint, 3400)).setScale(2, RoundingMode.DOWN))).append("\n");
-			builder.append(String.format("积分汇总：%s,目标：32000，缺：%s", sumPoint, NumberUtil.max(32000 - sumPoint, 0))).append("\n");
-			return builder.toString();
+		if (text.contains("咸鱼简报") && !text.contains("帮助")) {
+			return XYZWSimpleReportDTO.buildSimpleReport(text).printSimpleReportResult();
 		} else if (text.contains("宝箱") && text.contains("打开") && text.contains("领取")) {
-			String t_pattern = "[X](\\d+)";
-			Pattern brick_p = Pattern.compile(t_pattern);
-			Matcher brick_m = brick_p.matcher(text);
-			StringBuilder builder = new StringBuilder();
-			int sumPoint = 0;
-			int i = 0;
-			while (brick_m.find()) {
-				if (i < 5){
-					Title1 byCode = Title1.findByCode(i);
-					i++;
-					if (ObjUtil.isEmpty(byCode)){
-						continue;
-					}
-					Integer count = Integer.valueOf(brick_m.group(1));
-					int point = count * byCode.getPoint();
-					builder.append(String.format("%s：%s,折算：%s 分", byCode.name, count, point)).append("\n");
-					sumPoint += point;
-				}
-			}
-			String t_pattern1 = "[积分值](\\d+)";
-			Pattern brick_p1 = Pattern.compile(t_pattern1);
-			Matcher brick_m1 = brick_p1.matcher(text);
-
-			if (brick_m1.find()) {
-				Integer count = Integer.valueOf(brick_m1.group(1));
-				builder.append(String.format("未领取积分：%s 分", count)).append("\n");
-				sumPoint += count;
-			}
-			builder.append(String.format("原始积分：%s", sumPoint)).append("\n");
-			builder.append(String.format("宝箱周：%s轮", BigDecimal.valueOf(NumberUtil.div(sumPoint, 3400)).setScale(2,RoundingMode.DOWN))).append("\n");
-			return builder.toString();
+			return XYZWSimpleReportDTO.buildBox(apiResult).printBoxResult();
 		}
 		return null;
 	}
 
 	/**
-	 * umi-ocr 
-	 * @see https://github.com/hiroi-sora/Umi-OCR
+	 * umi-ocr
+	 *
 	 * @param base64Image
 	 * @return
+	 * @see https://github.com/hiroi-sora/Umi-OCR
 	 */
 	private static OCRApiResult ocrHandler(String base64Image) {
 		String url = "http://127.0.0.1:1224/api/ocr";
 		Map<String, Object> params = new HashMap<>();
 		Map options = new HashMap<>();
-		options.put("data.format", "json");
+		options.put("data.format", "dict");
 		options.put("tbpu.parser", "single_none");
 		params.put("base64", base64Image);
 		params.put("options ", options);
@@ -220,6 +128,7 @@ public class XYZWUtil {
 		return base64Image;
 	}
 
+	@Data
 	public static class OCRApiResult {
 		private Integer code;
 		private List<ApiData> data;
@@ -227,86 +136,18 @@ public class XYZWUtil {
 		private Double time;
 		private Double timestamp;
 
-		public Integer getCode() {
-			return code;
-		}
-
-		public void setCode(Integer code) {
-			this.code = code;
-		}
-
-		public List<ApiData> getData() {
-			return data;
-		}
-
-		public void setData(List<ApiData> data) {
-			this.data = data;
-		}
-
-		public Double getScore() {
-			return score;
-		}
-
-		public void setScore(Double score) {
-			this.score = score;
-		}
-
-		public Double getTime() {
-			return time;
-		}
-
-		public void setTime(Double time) {
-			this.time = time;
-		}
-
-		public Double getTimestamp() {
-			return timestamp;
-		}
-
-		public void setTimestamp(Double timestamp) {
-			this.timestamp = timestamp;
-		}
 	}
 
+	@Data
 	public static class ApiData {
-		private Object box;
+		private List<List<Integer>> box;
 		private Double score;
 		private String text;
 		private String end;
 
-		public Object getBox() {
-			return box;
-		}
-
-		public void setBox(Object box) {
-			this.box = box;
-		}
-
-		public Double getScore() {
-			return score;
-		}
-
-		public void setScore(Double score) {
-			this.score = score;
-		}
-
-		public String getText() {
-			return text;
-		}
-
-		public void setText(String text) {
-			this.text = text;
-		}
-
-		public String getEnd() {
-			return end;
-		}
-
-		public void setEnd(String end) {
-			this.end = end;
-		}
 	}
 
+	@Getter
 	public enum Title1 {
 		T4(0, "木质宝箱", 1),
 		T5(1, "青铜宝箱", 10),
@@ -316,46 +157,24 @@ public class XYZWUtil {
 		private Integer code;
 		private Integer point;
 
-		public static Title1 findByCode(Integer code){
+		public static Title1 findByCode(Integer code) {
 			for (Title1 value : Title1.values()) {
-				if (value.code == code){
+				if (value.code == code) {
 					return value;
 				}
 			}
 			return null;
 		}
-		
+
 		Title1(Integer code, String name, Integer point) {
 			this.name = name;
 			this.code = code;
 			this.point = point;
 		}
 
-		public Integer getPoint() {
-			return point;
-		}
-
-		public void setPoint(Integer point) {
-			this.point = point;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public Integer getCode() {
-			return code;
-		}
-
-		public void setCode(Integer code) {
-			this.code = code;
-		}
 	}
 
+	@Getter
 	public enum title {
 		T1("金砖", 0),
 		T2("招募令", 0),
@@ -374,15 +193,175 @@ public class XYZWUtil {
 			this.point = value;
 		}
 
+	}
 
-		public String getName() {
-			return name;
+	@Data
+	public static class XYZWSimpleReportDTO {
+		/**
+		 * 金币
+		 */
+		private BigDecimal coin;
+
+		/**
+		 * 金砖
+		 */
+		private Integer gold;
+
+		/**
+		 * 招募令
+		 */
+		private Integer recruit;
+
+		/**
+		 * 金鱼杆
+		 */
+		private Integer goldFish;
+
+		/**
+		 * 木箱
+		 */
+		private Integer woodBox;
+
+
+		/**
+		 * 青铜箱
+		 */
+		private Integer bronzeBox;
+
+		/**
+		 * 黄金箱
+		 */
+		private Integer goldBox;
+		/**
+		 * 铂金盒子
+		 */
+		private Integer platinumBox;
+
+		/**
+		 * 积分余额
+		 */
+		private Integer pointBalance;
+
+		public BigDecimal sumPoint() {
+			return NumberUtil.add(
+					NumberUtil.mul(woodBox, title.T4.getPoint()),
+					NumberUtil.mul(bronzeBox, title.T5.getPoint()),
+					NumberUtil.mul(goldBox, title.T6.getPoint()),
+					NumberUtil.mul(platinumBox, title.T7.getPoint()),
+					pointBalance
+			);
+		}
+		public String printSimpleReportResult() {
+			StringBuilder builder = new StringBuilder();
+			builder.append(String.format("%s：%s,目标：25万，缺：%s", title.T1.name, gold, NumberUtil.max(250000 - gold, 0))).append("\n");
+			builder.append(String.format("%s：%s,目标：3200，缺：%s", title.T2.name, recruit, NumberUtil.max(3200 - recruit, 0))).append("\n");
+			builder.append(String.format("%s：%s,目标：750，缺：%s", title.T3.name, goldFish, NumberUtil.max(750 - goldFish, 0))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T4.name, woodBox, NumberUtil.mul(woodBox, title.T4.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T5.name, bronzeBox, NumberUtil.mul(bronzeBox, title.T5.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, goldBox, NumberUtil.mul(goldBox, title.T6.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, platinumBox, NumberUtil.mul(platinumBox, title.T7.getPoint()))).append("\n");
+			builder.append(String.format("未领取积分：%s 分", pointBalance)).append("\n");
+			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("积分汇总：%s,目标：32000，缺：%s", sumPoint(), NumberUtil.max(NumberUtil.sub(32000 , sumPoint()), BigDecimal.ZERO))).append("\n");
+			return builder.toString();
 		}
 
-
-		public Integer getPoint() {
-			return point;
+		public String printBoxResult() {
+			StringBuilder builder = new StringBuilder();
+			builder.append(String.format("%s：%s,折算：%s 分", title.T4.name, woodBox, NumberUtil.mul(woodBox, title.T4.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T5.name, bronzeBox, NumberUtil.mul(bronzeBox, title.T5.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, goldBox, NumberUtil.mul(goldBox, title.T6.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, platinumBox, NumberUtil.mul(platinumBox, title.T7.getPoint()))).append("\n");
+			builder.append(String.format("未领取积分：%s 分", pointBalance)).append("\n");
+			builder.append(String.format("原始积分：%s 分", NumberUtil.sub(sumPoint(), pointBalance))).append("\n");
+			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("不开木箱：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(woodBox, title.T4.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("不开铂金：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(platinumBox, title.T7.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
+			return builder.toString();
 		}
 
+		public static XYZWSimpleReportDTO buildSimpleReport(String text) {
+
+			XYZWSimpleReportDTO dto = new XYZWSimpleReportDTO();
+
+			String coin_pattern = "金币[×x](\\d+\\.?\\d*)";
+			String t_pattern = "[×x](\\d+)";
+
+
+			Pattern coin_p = Pattern.compile(coin_pattern);
+			Matcher coin_m = coin_p.matcher(text);
+			if (coin_m.find()) {
+				BigDecimal bigDecimal = new BigDecimal(coin_m.group(1));
+				dto.setCoin(bigDecimal);
+			} else {
+				System.out.println("未找到金币数量");
+			}
+
+			StringBuilder builder = new StringBuilder();
+			for (title s : title.values()) {
+				Pattern brick_p = Pattern.compile(s.name + t_pattern);
+				Matcher brick_m = brick_p.matcher(text);
+				if (brick_m.find()) {
+					int brick_number = Integer.parseInt(brick_m.group(1));
+					switch (s) {
+						case T1:
+							dto.setGold(brick_number);
+							break;
+						case T2:
+							dto.setRecruit(brick_number);
+							break;
+						case T3:
+							dto.setGoldFish(brick_number);
+							break;
+						case T4:
+							dto.setWoodBox(brick_number);
+							break;
+						case T5:
+							dto.setBronzeBox(brick_number);
+							break;
+						case T6:
+							dto.setGoldBox(brick_number);
+							break;
+						case T7:
+							dto.setPlatinumBox(brick_number);
+							break;
+						case T8:
+							dto.setPointBalance(brick_number);
+							break;
+					}
+//				System.out.println(String.format("%s数量：%s",s.name,brick_number));
+				} else {
+					System.out.println(String.format("未找到%s数量", s.name));
+				}
+			}
+			return dto;
+		}
+
+		public static XYZWSimpleReportDTO buildBox(OCRApiResult apiResult) {
+			List<ApiData> data = apiResult.getData();
+			List<ApiData> collect = data.stream().filter(d -> d.getText().startsWith("X")).collect(Collectors.toList());
+			List<ApiData> dataList = collect.stream().sorted(Comparator.comparingInt(d -> d.getBox().get(0).get(0)))
+					.collect(Collectors.toList());
+			if (ObjUtil.isEmpty(dataList) || 4 == dataList.size()) {
+				return null;
+			}
+			XYZWSimpleReportDTO dto = new XYZWSimpleReportDTO();
+			dto.setWoodBox(Integer.valueOf(dataList.get(0).getText().replace("X", "").trim()));
+			dto.setBronzeBox(Integer.valueOf(dataList.get(1).getText().replace("X", "").trim()));
+			dto.setGoldBox(Integer.valueOf(dataList.get(2).getText().replace("X", "").trim()));
+			dto.setPlatinumBox(Integer.valueOf(dataList.get(4).getText().replace("X", "").trim()));
+			Optional<String> optional = data.stream().filter(d -> d.getText().startsWith("积分值")).findFirst().map(ApiData::getText);
+			if (optional.isPresent()) {
+				String t_pattern1 = "[积分值](\\d+)";
+				Pattern brick_p1 = Pattern.compile(t_pattern1);
+				Matcher brick_m1 = brick_p1.matcher(optional.get());
+
+				if (brick_m1.find()) {
+					Integer count = Integer.valueOf(brick_m1.group(1));
+					dto.setPointBalance(count);
+				}
+			}
+			return dto;
+		}
 	}
 }
