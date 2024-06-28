@@ -1,4 +1,4 @@
-package com.meteor.wechatbc.util;
+package com.meteor.wechatbc.xyzw;
 
 import cn.hutool.core.text.UnicodeUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -97,7 +97,7 @@ public class XYZWUtil {
 	 *
 	 * @param base64Image
 	 * @return
-	 * @see https://github.com/hiroi-sora/Umi-OCR
+	 * @see <a href="https://github.com/hiroi-sora/Umi-OCR">Umi-OCR</a>
 	 */
 	private static OCRApiResult ocrHandler(String base64Image) {
 		String url = "http://127.0.0.1:1224/api/ocr";
@@ -242,25 +242,61 @@ public class XYZWUtil {
 		 */
 		private Integer pointBalance;
 
+		public BigDecimal getCoin() {
+			return Optional.ofNullable(coin).orElse(BigDecimal.ZERO);
+		}
+
+		public Integer getGold() {
+			return Optional.ofNullable(gold).orElse(0);
+		}
+
+		public Integer getRecruit() {
+			return Optional.ofNullable(recruit).orElse(0);
+		}
+
+		public Integer getGoldFish() {
+			return Optional.ofNullable(goldFish).orElse(0);
+		}
+
+		public Integer getWoodBox() {
+			return Optional.ofNullable(woodBox).orElse(0);
+		}
+
+		public Integer getBronzeBox() {
+			return Optional.ofNullable(bronzeBox).orElse(0);
+		}
+
+		public Integer getGoldBox() {
+			return Optional.ofNullable(goldBox).orElse(0);
+		}
+
+		public Integer getPlatinumBox() {
+			return Optional.ofNullable(platinumBox).orElse(0);
+		}
+
+		public Integer getPointBalance() {
+			return Optional.ofNullable(pointBalance).orElse(0);
+		}
+
 		public BigDecimal sumPoint() {
 			return NumberUtil.add(
-					NumberUtil.mul(woodBox, title.T4.getPoint()),
-					NumberUtil.mul(bronzeBox, title.T5.getPoint()),
-					NumberUtil.mul(goldBox, title.T6.getPoint()),
-					NumberUtil.mul(platinumBox, title.T7.getPoint()),
+					NumberUtil.mul(getWoodBox(), title.T4.getPoint()),
+					NumberUtil.mul(getBronzeBox(), title.T5.getPoint()),
+					NumberUtil.mul(getGoldBox(), title.T6.getPoint()),
+					NumberUtil.mul(getPlatinumBox(), title.T7.getPoint()),
 					pointBalance
 			);
 		}
 		public String printSimpleReportResult() {
 			StringBuilder builder = new StringBuilder();
-			builder.append(String.format("%s：%s,目标：25万，缺：%s", title.T1.name, gold, NumberUtil.max(250000 - gold, 0))).append("\n");
-			builder.append(String.format("%s：%s,目标：3200，缺：%s", title.T2.name, recruit, NumberUtil.max(3200 - recruit, 0))).append("\n");
-			builder.append(String.format("%s：%s,目标：750，缺：%s", title.T3.name, goldFish, NumberUtil.max(750 - goldFish, 0))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T4.name, woodBox, NumberUtil.mul(woodBox, title.T4.getPoint()))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T5.name, bronzeBox, NumberUtil.mul(bronzeBox, title.T5.getPoint()))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, goldBox, NumberUtil.mul(goldBox, title.T6.getPoint()))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, platinumBox, NumberUtil.mul(platinumBox, title.T7.getPoint()))).append("\n");
-			builder.append(String.format("未领取积分：%s 分", pointBalance)).append("\n");
+			builder.append(String.format("%s：%s,目标：25万，缺：%s", title.T1.name, getGold(), NumberUtil.max(250000 - getGold(), 0))).append("\n");
+			builder.append(String.format("%s：%s,目标：3200，缺：%s", title.T2.name, getRecruit(), NumberUtil.max(3200 - getRecruit(), 0))).append("\n");
+			builder.append(String.format("%s：%s,目标：750，缺：%s", title.T3.name, getGoldFish(), NumberUtil.max(750 - getGoldFish(), 0))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T4.name, getWoodBox(), NumberUtil.mul(getWoodBox(), title.T4.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T5.name, getBronzeBox(), NumberUtil.mul(getBronzeBox(), title.T5.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, getGoldBox(), NumberUtil.mul(getGoldBox(), title.T6.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, getPlatinumBox(), NumberUtil.mul(getPlatinumBox(), title.T7.getPoint()))).append("\n");
+			builder.append(String.format("未领取积分：%s 分", getPointBalance())).append("\n");
 			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), BigDecimal.valueOf(3400), 2))).append("\n");
 			builder.append(String.format("积分汇总：%s,目标：32000，缺：%s", sumPoint(), NumberUtil.max(NumberUtil.sub(32000 , sumPoint()), BigDecimal.ZERO))).append("\n");
 			return builder.toString();
@@ -268,15 +304,15 @@ public class XYZWUtil {
 
 		public String printBoxResult() {
 			StringBuilder builder = new StringBuilder();
-			builder.append(String.format("%s：%s,折算：%s 分", title.T4.name, woodBox, NumberUtil.mul(woodBox, title.T4.getPoint()))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T5.name, bronzeBox, NumberUtil.mul(bronzeBox, title.T5.getPoint()))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, goldBox, NumberUtil.mul(goldBox, title.T6.getPoint()))).append("\n");
-			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, platinumBox, NumberUtil.mul(platinumBox, title.T7.getPoint()))).append("\n");
-			builder.append(String.format("未领取积分：%s 分", pointBalance)).append("\n");
-			builder.append(String.format("原始积分：%s 分", NumberUtil.sub(sumPoint(), pointBalance))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T4.name, getWoodBox(), NumberUtil.mul(getWoodBox(), title.T4.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T5.name, getBronzeBox(), NumberUtil.mul(getBronzeBox(), title.T5.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, getGoldBox(), NumberUtil.mul(getGoldBox(), title.T6.getPoint()))).append("\n");
+			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, getPlatinumBox(), NumberUtil.mul(getPlatinumBox(), title.T7.getPoint()))).append("\n");
+			builder.append(String.format("未领取积分：%s 分", getPointBalance())).append("\n");
+			builder.append(String.format("原始积分：%s 分", NumberUtil.sub(sumPoint(), getPointBalance()))).append("\n");
 			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), BigDecimal.valueOf(3400), 2))).append("\n");
-			builder.append(String.format("不开木箱：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(woodBox, title.T4.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
-			builder.append(String.format("不开铂金：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(platinumBox, title.T7.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("不开木箱：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(getWoodBox(), title.T4.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("不开铂金：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(getPlatinumBox(), title.T7.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
 			return builder.toString();
 		}
 
@@ -297,7 +333,6 @@ public class XYZWUtil {
 				System.out.println("未找到金币数量");
 			}
 
-			StringBuilder builder = new StringBuilder();
 			for (title s : title.values()) {
 				Pattern brick_p = Pattern.compile(s.name + t_pattern);
 				Matcher brick_m = brick_p.matcher(text);
