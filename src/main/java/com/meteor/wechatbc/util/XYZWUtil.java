@@ -339,17 +339,17 @@ public class XYZWUtil {
 
 		public static XYZWSimpleReportDTO buildBox(OCRApiResult apiResult) {
 			List<ApiData> data = apiResult.getData();
-			List<ApiData> collect = data.stream().filter(d -> d.getText().startsWith("X")).collect(Collectors.toList());
+			List<ApiData> collect = data.stream().filter(d -> d.getText().startsWith("X")||d.getText().startsWith("x")).collect(Collectors.toList());
 			List<ApiData> dataList = collect.stream().sorted(Comparator.comparingInt(d -> d.getBox().get(0).get(0)))
 					.collect(Collectors.toList());
 			if (ObjUtil.isEmpty(dataList) || 4 == dataList.size()) {
 				return null;
 			}
 			XYZWSimpleReportDTO dto = new XYZWSimpleReportDTO();
-			dto.setWoodBox(Integer.valueOf(dataList.get(0).getText().replace("X", "").trim()));
-			dto.setBronzeBox(Integer.valueOf(dataList.get(1).getText().replace("X", "").trim()));
-			dto.setGoldBox(Integer.valueOf(dataList.get(2).getText().replace("X", "").trim()));
-			dto.setPlatinumBox(Integer.valueOf(dataList.get(4).getText().replace("X", "").trim()));
+			dto.setWoodBox(Integer.valueOf(dataList.get(0).getText().replace("x", "").replace("X", "").trim()));
+			dto.setBronzeBox(Integer.valueOf(dataList.get(1).getText().replace("x", "").replace("X", "").trim()));
+			dto.setGoldBox(Integer.valueOf(dataList.get(2).getText().replace("x", "").replace("X", "").trim()));
+			dto.setPlatinumBox(Integer.valueOf(dataList.get(4).getText().replace("x", "").replace("X", "").trim()));
 			Optional<String> optional = data.stream().filter(d -> d.getText().startsWith("积分值")).findFirst().map(ApiData::getText);
 			if (optional.isPresent()) {
 				String t_pattern1 = "[积分值](\\d+)";
