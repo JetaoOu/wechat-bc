@@ -12,7 +12,7 @@ public enum CommandEnum {
 	t0("帮助",1,"./img/xyzw/help.png"),
 	t1("金色水晶",1,"./img/xyzw/t1.png"),
 	t2("进阶图",1,"./img/xyzw/t2.jpg"),
-	t3("梦魇水晶",1,"./img/xyzw/t3.jpg"),
+	t3("梦魇水晶",1,"./img/xyzw/t3.png"),
 	t4("玩具扳手",1,"./img/xyzw/t4.png"),
 	t5("每日咸王",1,"./img/xyzw/t5.png"),
 	t6("排位对战",1,"./img/xyzw/t6.png"),
@@ -23,11 +23,14 @@ public enum CommandEnum {
 	t11("俱乐部人数",1,"./img/xyzw/t11.jpg"),
 	t12("VIP图",1,"./img/xyzw/t12.png"),
 	t12_1("vip图",1,"./img/xyzw/t12.png"),
+	t13("金币图",1,"./img/xyzw/t13.jpg"),
+	t14("礼包码",2,null,"taptap666、VIP666、vip666、XY888、QQXY888、happy666、HAPPY666、xyzwgame666、douyin666、douyin777、douyin888、huhushengwei888、APP666、app666"),
+	
 	;
 	@Getter
 	private String name;
 	/**
-	 * 指令类型：1 返回预设图片 
+	 * 指令类型：1 返回预设图片  2 返回预设文字
 	 */
 	@Getter
 	private Integer type;
@@ -37,6 +40,16 @@ public enum CommandEnum {
 	 */
 	@Getter
 	private String path;
+	
+	@Getter
+	private String text;
+
+	CommandEnum(String name, Integer type, String path, String text) {
+		this.name = name;
+		this.type = type;
+		this.path = path;
+		this.text = text;
+	}
 
 	CommandEnum(String name, Integer type, String path) {
 		this.name = name;

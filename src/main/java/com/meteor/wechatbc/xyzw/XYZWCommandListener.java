@@ -43,8 +43,9 @@ public class XYZWCommandListener implements Listener {
 					String content = String.format("@%s  \n%s", sender.getNickName(), simpleReport);
 					contact.sendMessage(content);
 				}
+			}else {
+				handlerCommand(messageEvent, message);
 			}
-			handlerCommand(messageEvent, message);
 		});
 		try {
 			future.get();
@@ -60,6 +61,11 @@ public class XYZWCommandListener implements Listener {
 				case 1:{
 					Contact contact = messageEvent.getEventManager().getWeChatClient().getContactManager().getContactGroupCache().get(message.getFromUserName());
 					contact.sendImage(new File(commandEnum.getPath()));
+					break;
+				}
+				case 2:{
+					Contact contact = messageEvent.getEventManager().getWeChatClient().getContactManager().getContactGroupCache().get(message.getFromUserName());
+					contact.sendMessage(commandEnum.getText());
 					break;
 				}
 				default:

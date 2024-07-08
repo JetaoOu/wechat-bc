@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
  * @version: 1.0
  */
 public class XYZWUtil {
+	
+	private static final BigDecimal pointSku = BigDecimal.valueOf(3460);
 
 	public static void main(String[] args) {
 		String s = praiseSimpleReport("C:\\Users\\jietao.ou\\Pictures\\2bc0e4d1661979bf1aa670a52bc4b9d.jpg");
@@ -109,7 +111,7 @@ public class XYZWUtil {
 		params.put("options ", options);
 		String post = HttpUtil.post(url, JSON.toJSONString(params));
 		String result = UnicodeUtil.toString(post);
-		System.out.println(result);
+//		System.out.println(result);
 		OCRApiResult apiResult = JSON.parseObject(result, OCRApiResult.class);
 		return apiResult;
 	}
@@ -297,7 +299,7 @@ public class XYZWUtil {
 			builder.append(String.format("%s：%s,折算：%s 分", title.T6.name, getGoldBox(), NumberUtil.mul(getGoldBox(), title.T6.getPoint()))).append("\n");
 			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, getPlatinumBox(), NumberUtil.mul(getPlatinumBox(), title.T7.getPoint()))).append("\n");
 			builder.append(String.format("未领取积分：%s 分", getPointBalance())).append("\n");
-			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), pointSku, 2))).append("\n");
 			builder.append(String.format("积分汇总：%s,目标：32000，缺：%s", sumPoint(), NumberUtil.max(NumberUtil.sub(32000 , sumPoint()), BigDecimal.ZERO))).append("\n");
 			return builder.toString();
 		}
@@ -310,9 +312,9 @@ public class XYZWUtil {
 			builder.append(String.format("%s：%s,折算：%s 分", title.T7.name, getPlatinumBox(), NumberUtil.mul(getPlatinumBox(), title.T7.getPoint()))).append("\n");
 			builder.append(String.format("未领取积分：%s 分", getPointBalance())).append("\n");
 			builder.append(String.format("原始积分：%s 分", NumberUtil.sub(sumPoint(), getPointBalance()))).append("\n");
-			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), BigDecimal.valueOf(3400), 2))).append("\n");
-			builder.append(String.format("不开木箱：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(getWoodBox(), title.T4.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
-			builder.append(String.format("不开铂金：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(getPlatinumBox(), title.T7.getPoint())), BigDecimal.valueOf(3400), 2))).append("\n");
+			builder.append(String.format("宝箱周：%s 轮", NumberUtil.div(sumPoint(), pointSku, 2))).append("\n");
+			builder.append(String.format("不开木箱：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(getWoodBox(), title.T4.getPoint())), pointSku, 2))).append("\n");
+			builder.append(String.format("不开铂金：%s 轮", NumberUtil.div(sumPoint().subtract(NumberUtil.mul(getPlatinumBox(), title.T7.getPoint())), pointSku, 2))).append("\n");
 			return builder.toString();
 		}
 

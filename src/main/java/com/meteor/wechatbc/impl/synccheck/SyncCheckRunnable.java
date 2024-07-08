@@ -90,7 +90,7 @@ public class SyncCheckRunnable {
             if (message.getFromUserName().startsWith("@@")) {
                 final Contact groupContact = weChatClient.getContactManager().getGroupContact(message.getFromUserName());
                 final Contact.ContactMember groupMemberUser = groupContact.findGroupMemberUser(message.getSenderUserName());
-                System.out.println(groupContact);
+//                System.out.println(groupContact);
                 logger.info("{} > {} : {}", groupContact.getNickName(), groupMemberUser.getDisplayName(), message.getContent());
                 callMessageEvent(new MessageEvent(messageCache.getIfPresent(String.valueOf(message.getMsgId()))));
                 return;
@@ -148,7 +148,7 @@ public class SyncCheckRunnable {
                 }
             }catch (Exception e){
                 e.printStackTrace();
-                logger.info("在尝试异步获取消息时遇到了一个错误");
+                logger.warn("在尝试异步获取消息时遇到了一个错误");
             }
             this.query();
         });
