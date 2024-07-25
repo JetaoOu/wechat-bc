@@ -323,7 +323,7 @@ public class XYZWUtil {
 			XYZWSimpleReportDTO dto = new XYZWSimpleReportDTO();
 
 			String coin_pattern = "金币[×x](\\d+\\.?\\d*)";
-			String t_pattern = "[×x](\\d+)";
+			String t_pattern = "[×x](\\d*\\.\\d+|\\d+)";
 
 
 			Pattern coin_p = Pattern.compile(coin_pattern);
@@ -339,7 +339,15 @@ public class XYZWUtil {
 				Pattern brick_p = Pattern.compile(s.name + t_pattern);
 				Matcher brick_m = brick_p.matcher(text);
 				if (brick_m.find()) {
-					int brick_number = Integer.parseInt(brick_m.group(1));
+					String group = brick_m.group(1);
+					int brick_number = 0;
+					if (hasDecimalValue(group)){
+						BigDecimal bigDecimal = new BigDecimal(group);
+						BigDecimal bigDecimal1 = NumberUtil.mul(bigDecimal, BigDecimal.valueOf(10000));
+						brick_number = bigDecimal1.intValue();
+					}else{
+						brick_number = Integer.parseInt(group);
+					}
 					switch (s) {
 						case T1:
 							dto.setGold(brick_number);
@@ -373,7 +381,18 @@ public class XYZWUtil {
 			}
 			return dto;
 		}
-
+		public static boolean hasDecimalValue(String numStr) {
+			int decimalIndex = numStr.indexOf('.');
+			if (decimalIndex == -1) {
+				return false; // 没有小数点
+			}
+			for (int i = decimalIndex + 1; i < numStr.length(); i++) {
+				if (numStr.charAt(i) != '0') {
+					return true; // 小数点后有非零值
+				}
+			}
+			return false; // 小数点后全为零
+		}
 		public static XYZWSimpleReportDTO buildBox(OCRApiResult apiResult) {
 			List<ApiData> data = apiResult.getData();
 			List<ApiData> collect = data.stream().filter(d -> d.getText().startsWith("X")||d.getText().startsWith("x")).collect(Collectors.toList());

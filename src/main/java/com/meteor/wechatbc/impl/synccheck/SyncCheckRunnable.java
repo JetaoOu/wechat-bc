@@ -55,6 +55,9 @@ public class SyncCheckRunnable {
                     .expireAfterWrite(30, TimeUnit.MINUTES)
                     .build();
 
+    public void  clearMessageCache(){
+        messageCache.invalidateAll();
+    }
     /**
      * 处理消息。根据消息的类型做不同的处理 (例如转发事件)
      */

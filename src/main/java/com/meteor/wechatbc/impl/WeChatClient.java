@@ -86,7 +86,7 @@ public class WeChatClient {
      * 启动
      */
     public void start(){
-        this.weChatCore.getHttpAPI().initWeChat();
+//        this.weChatCore.getHttpAPI().initWeChat();
         if (this.weChatCore.getHttpAPI().initWeChat() != 0) {
             throw new RuntimeException("初始化微信接口失败");
         }
@@ -105,6 +105,7 @@ public class WeChatClient {
         Contact user = this.weChatCore.getSession().getWxInitInfo().getUser();
 
         logger = LogManager.getLogger(String.format("%s(%s)",user.getNickName(),user.getUin()));
+        logger.warn("欢迎使用WeChatBC");
     }
 
     public void initPluginManager(){
@@ -147,6 +148,7 @@ public class WeChatClient {
                         .build());
                 this.initWeChatCore(session);
                 this.start();
+                this.getSyncCheckRunnable().clearMessageCache();
                 return;
             }
         } catch (Exception e) {
